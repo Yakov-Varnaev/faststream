@@ -175,8 +175,6 @@ class Application(ABC, AsyncAPIApplication):
 
         if self.broker is not None:
             await self.broker.start()
-        else:
-            self._log(logging.WARNING, "No brokers were found!")
 
         for func in self._after_startup_calling:
             await func()
@@ -199,6 +197,7 @@ class Application(ABC, AsyncAPIApplication):
     ) -> None:
         self._log(log_level, "FastStream app starting...")
         await self.start(**(run_extra_options or {}))
+        assert self.broker, "You should setup a broker"  # nosec B101
         self._log(
             log_level, "FastStream app started successfully! To exit, press CTRL+C"
         )
