@@ -15,14 +15,14 @@ class AsgiTestcase:
         raise NotImplementedError()
 
     def test_not_found(self):
-        app = AsgiFastStream()
+        app = AsgiFastStream(self.get_broker())
 
         with TestClient(app) as client:
             response = client.get("/")
             assert response.status_code == 404
 
     def test_ws_not_found(self):
-        app = AsgiFastStream()
+        app = AsgiFastStream(self.get_broker())
 
         with TestClient(app) as client:  # noqa: SIM117
             with pytest.raises(WebSocketDisconnect):
@@ -33,9 +33,10 @@ class AsgiTestcase:
         broker = self.get_broker()
 
         app = AsgiFastStream(
+            self.get_broker(),
             asgi_routes=[
                 ("/health", make_ping_asgi(broker, timeout=5.0)),
-            ]
+            ],
         )
 
         with TestClient(app) as client:
@@ -73,7 +74,7 @@ class AsgiTestcase:
         async def some_handler(scope):
             return AsgiResponse(body=b"test", status_code=200)
 
-        app = AsgiFastStream(asgi_routes=[("/test", some_handler)])
+        app = AsgiFastStream(self.get_broker(), asgi_routes=[("/test", some_handler)])
 
         with TestClient(app) as client:
             response = client.get("/test")
