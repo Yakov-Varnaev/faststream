@@ -8,6 +8,7 @@ import anyio
 import pytest
 
 from faststream import FastStream, TestApp
+from faststream.rabbit.testing import TestRabbitBroker
 from faststream._compat import IS_WINDOWS
 from faststream.log import logger
 
@@ -38,7 +39,8 @@ async def test_set_broker_in_on_startup_hook(app_without_broker: FastStream, bro
 
     app_without_broker.on_startup(add_broker)
 
-    await app_without_broker._startup()
+    async with TestRabbitBroker(broker):
+        await app_without_broker._startup()
 
 
 @pytest.mark.asyncio
