@@ -175,6 +175,8 @@ class Application(ABC, AsyncAPIApplication):
 
         if self.broker is not None:
             await self.broker.start()
+        else:
+            self._log(logging.WARNING, "No brokers were found!")
 
         for func in self._after_startup_calling:
             await func()
