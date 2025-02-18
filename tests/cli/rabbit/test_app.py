@@ -8,9 +8,9 @@ import anyio
 import pytest
 
 from faststream import FastStream, TestApp
-from faststream.rabbit.testing import TestRabbitBroker
 from faststream._compat import IS_WINDOWS
 from faststream.log import logger
+from faststream.rabbit.testing import TestRabbitBroker
 
 
 def test_init(app: FastStream, broker):
