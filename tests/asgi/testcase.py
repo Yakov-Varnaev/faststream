@@ -1,4 +1,5 @@
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 from starlette.testclient import TestClient
@@ -31,12 +32,14 @@ class AsgiTestcase:
 
     def test_asgi_ping_unhealthy(self):
         broker = self.get_broker()
-        test_broker = self.get_test_broker(broker)
+
+        broker.ping = AsyncMock()
+        broker.ping.return_value = False
 
         app = AsgiFastStream(
             broker,
             asgi_routes=[
-                ("/health", make_ping_asgi(test_broker, timeout=5.0)),
+                ("/health", make_ping_asgi(broker, timeout=5.0)),
             ],
         )
 
