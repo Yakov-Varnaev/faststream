@@ -91,9 +91,9 @@ class RawMessage:
         headers: Optional["AnyDict"],
         correlation_id: str,
     ) -> bytes:
-        """Encodes message into binary format.
+        """Returnes binary encoded message.
 
-        [faststream,<header_length>]<headers_json><body>
+        `[faststream,<header_length>]<headers_json><body>`
 
         faststream - is just 'magic' key, which helps to decide whether it's faststream message or not.
         header_length - the length of bytes with headers in json format.
