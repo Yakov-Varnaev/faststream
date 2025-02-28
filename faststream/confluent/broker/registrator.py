@@ -70,7 +70,7 @@ class KafkaRegistrator(
     def subscriber(
         self,
         *topics: Annotated[
-            Union[str | TopicConfig],
+            Union[str, TopicConfig],
             Doc("Kafka topics to consume messages from."),
         ],
         partitions: Sequence["TopicPartition"] = (),
@@ -356,7 +356,7 @@ class KafkaRegistrator(
     def subscriber(
         self,
         *topics: Annotated[
-            Union[str | TopicConfig],
+            Union[str, TopicConfig],
             Doc("Kafka topics to consume messages from."),
         ],
         partitions: Sequence["TopicPartition"] = (),
