@@ -109,8 +109,10 @@ class RawMessage:
 
         header_bytes = dump_json(msg.headers)
 
-        msg = f"[faststream,{len(header_bytes)}]".encode() + header_bytes + msg.data
-        return msg
+        bytes_msg = (
+            f"[faststream,{len(header_bytes)}]".encode() + header_bytes + msg.data
+        )
+        return bytes_msg
 
     @staticmethod
     def parse(data: bytes) -> Tuple[bytes, "AnyDict"]:
