@@ -91,7 +91,7 @@ class RawMessage:
         headers: Optional["AnyDict"],
         correlation_id: str,
     ) -> bytes:
-        """Returnes binary encoded message.
+        """Returns binary encoded message.
 
         `[faststream,<header_length>]<headers_json><body>`
 
