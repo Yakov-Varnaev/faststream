@@ -20,6 +20,7 @@ from faststream.broker.subscriber.mixins import ConcurrentMixin, TasksMixin
 from faststream.broker.subscriber.usecase import SubscriberUsecase
 from faststream.broker.types import MsgType
 from faststream.broker.utils import process_msg
+from faststream.confluent.config import TopicConfig
 from faststream.confluent.parser import AsyncConfluentParser
 from faststream.confluent.schemas import TopicPartition
 
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
 class LogicSubscriber(TasksMixin, SubscriberUsecase[MsgType]):
     """A class to handle logic for consuming messages from Kafka."""
 
-    topics: Sequence[str]
+    topics: Sequence[TopicConfig]
     group_id: Optional[str]
 
     builder: Optional[Callable[..., "AsyncConfluentConsumer"]]
@@ -50,7 +51,7 @@ class LogicSubscriber(TasksMixin, SubscriberUsecase[MsgType]):
 
     def __init__(
         self,
-        *topics: str,
+        *topics: TopicConfig,
         partitions: Sequence["TopicPartition"],
         polling_interval: float,
         # Kafka information
@@ -226,7 +227,7 @@ class LogicSubscriber(TasksMixin, SubscriberUsecase[MsgType]):
     @property
     def topic_names(self) -> List[str]:
         if self.topics:
-            return list(self.topics)
+            return [str(t) for t in self.topics]
         else:
             return [f"{p.topic}-{p.partition}" for p in self.partitions]
 
@@ -253,7 +254,14 @@ class LogicSubscriber(TasksMixin, SubscriberUsecase[MsgType]):
         }
 
     def add_prefix(self, prefix: str) -> None:
-        self.topics = tuple("".join((prefix, t)) for t in self.topics)
+        self.topics = tuple(
+            TopicConfig(
+                name="".join((prefix, str(t))),
+                num_partitions=t.num_partitions,
+                replication_factor=t.replication_factor,
+            )
+            for t in self.topics
+        )
 
         self.partitions = [
             TopicPartition(
@@ -270,7 +278,7 @@ class LogicSubscriber(TasksMixin, SubscriberUsecase[MsgType]):
 class DefaultSubscriber(LogicSubscriber[Message]):
     def __init__(
         self,
-        *topics: str,
+        *topics: TopicConfig,
         # Kafka information
         partitions: Sequence["TopicPartition"],
         polling_interval: float,
@@ -321,7 +329,7 @@ class DefaultSubscriber(LogicSubscriber[Message]):
         if message is None:
             topic = ",".join(self.topic_names)
         else:
-            topic = message.raw_message.topic() or ",".join(self.topics)
+            topic = message.raw_message.topic() or ",".join(self.topic_names)
 
         return self.build_log_context(
             message=message,
@@ -333,7 +341,7 @@ class DefaultSubscriber(LogicSubscriber[Message]):
 class BatchSubscriber(LogicSubscriber[Tuple[Message, ...]]):
     def __init__(
         self,
-        *topics: str,
+        *topics: TopicConfig,
         partitions: Sequence["TopicPartition"],
         polling_interval: float,
         max_records: Optional[int],
@@ -409,7 +417,7 @@ class BatchSubscriber(LogicSubscriber[Tuple[Message, ...]]):
 class ConcurrentDefaultSubscriber(ConcurrentMixin[Message], DefaultSubscriber):
     def __init__(
         self,
-        *topics: str,
+        *topics: TopicConfig,
         # Kafka information
         partitions: Sequence["TopicPartition"],
         polling_interval: float,

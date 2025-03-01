@@ -10,6 +10,7 @@ from typing import (
     overload,
 )
 
+from faststream.confluent.config import TopicConfig
 from faststream.confluent.subscriber.asyncapi import (
     AsyncAPIBatchSubscriber,
     AsyncAPIConcurrentDefaultSubscriber,
@@ -112,7 +113,7 @@ def create_subscriber(
 
 
 def create_subscriber(
-    *topics: str,
+    *topics: TopicConfig,
     partitions: Sequence["TopicPartition"],
     polling_interval: float,
     batch: bool,

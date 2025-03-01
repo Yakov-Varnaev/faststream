@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
@@ -292,3 +293,16 @@ class ConfluentFastConfig:
                 data[key] = enum(data[key]).value
 
         return data
+
+
+@dataclass
+class TopicConfig:
+    name: str
+    num_partitions: int = 1
+    replication_factor: int = 1
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __hash__(self) -> int:
+        return hash(self.name)
