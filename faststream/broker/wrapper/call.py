@@ -157,7 +157,7 @@ class HandlerCallWrapper(Generic[MsgType, P_HandlerParams, T_HandlerReturn]):
         call = self._original_call
         for decor in _call_decorators:
             call = decor(call)
-        self._original_call = call
+        # self._original_call = call
 
         f: Callable[..., Awaitable[Any]] = to_async(call)
 
