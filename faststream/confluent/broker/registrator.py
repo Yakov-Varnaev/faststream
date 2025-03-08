@@ -16,6 +16,7 @@ from typing_extensions import Annotated, Doc, deprecated, override
 
 from faststream.broker.core.abc import ABCBroker
 from faststream.broker.utils import default_filter
+from faststream.confluent.config import TopicConfig
 from faststream.confluent.publisher.asyncapi import AsyncAPIPublisher
 from faststream.confluent.subscriber.factory import create_subscriber
 from faststream.exceptions import SetupError
@@ -69,7 +70,7 @@ class KafkaRegistrator(
     def subscriber(
         self,
         *topics: Annotated[
-            str,
+            Union[str, TopicConfig],
             Doc("Kafka topics to consume messages from."),
         ],
         partitions: Sequence["TopicPartition"] = (),
@@ -355,7 +356,7 @@ class KafkaRegistrator(
     def subscriber(
         self,
         *topics: Annotated[
-            str,
+            Union[str, TopicConfig],
             Doc("Kafka topics to consume messages from."),
         ],
         partitions: Sequence["TopicPartition"] = (),
@@ -641,7 +642,7 @@ class KafkaRegistrator(
     def subscriber(
         self,
         *topics: Annotated[
-            str,
+            Union[str, TopicConfig],
             Doc("Kafka topics to consume messages from."),
         ],
         partitions: Sequence["TopicPartition"] = (),
@@ -930,7 +931,7 @@ class KafkaRegistrator(
     def subscriber(
         self,
         *topics: Annotated[
-            str,
+            Union[str, TopicConfig],
             Doc("Kafka topics to consume messages from."),
         ],
         partitions: Sequence["TopicPartition"] = (),
@@ -1219,7 +1220,7 @@ class KafkaRegistrator(
             raise SetupError("You should install `group_id` with manual commit mode")
 
         subscriber = create_subscriber(
-            *topics,
+            *[t if isinstance(t, TopicConfig) else TopicConfig(t) for t in topics],
             max_workers=max_workers,
             polling_interval=polling_interval,
             partitions=partitions,

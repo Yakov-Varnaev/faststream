@@ -215,7 +215,7 @@ class AsyncConfluentConsumer:
 
     def __init__(
         self,
-        *topics: str,
+        *topics: config_module.TopicConfig,
         partitions: Sequence["TopicPartition"],
         logger: Optional["LoggerProto"],
         config: config_module.ConfluentFastConfig,
@@ -302,8 +302,13 @@ class AsyncConfluentConsumer:
         self._lock = anyio.Lock()
 
     @property
-    def topics_to_create(self) -> List[str]:
-        return list({*self.topics, *(p.topic for p in self.partitions)})
+    def topics_to_create(self) -> List[config_module.TopicConfig]:
+        return list(
+            {
+                *self.topics,
+                *(config_module.TopicConfig(p.topic) for p in self.partitions),
+            }
+        )
 
     async def start(self) -> None:
         """Starts the Kafka consumer and subscribes to the specified topics."""
@@ -319,7 +324,7 @@ class AsyncConfluentConsumer:
             )
 
         if self.topics:
-            await call_or_await(self.consumer.subscribe, self.topics)
+            await call_or_await(self.consumer.subscribe, [str(t) for t in self.topics])
 
         elif self.partitions:
             await call_or_await(
@@ -426,7 +431,7 @@ class BatchBuilder:
 
 
 def create_topics(
-    topics: List[str],
+    topics: List[config_module.TopicConfig],
     config: Dict[str, Optional[Union[str, int, float, bool, Any]]],
     logger_: Optional["LoggerProto"] = None,
 ) -> None:
@@ -438,7 +443,14 @@ def create_topics(
     )
 
     fs = admin_client.create_topics(
-        [NewTopic(topic, num_partitions=1, replication_factor=1) for topic in topics]
+        [
+            NewTopic(
+                topic.name,
+                num_partitions=topic.num_partitions,
+                replication_factor=topic.replication_factor,
+            )
+            for topic in topics
+        ]
     )
 
     for topic, f in fs.items():

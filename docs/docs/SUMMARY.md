@@ -514,6 +514,7 @@ search:
                     - [OffsetStoreMethod](api/faststream/confluent/config/OffsetStoreMethod.md)
                     - [SASLOAUTHBearerMethod](api/faststream/confluent/config/SASLOAUTHBearerMethod.md)
                     - [SecurityProtocol](api/faststream/confluent/config/SecurityProtocol.md)
+                    - [TopicConfig](api/faststream/confluent/config/TopicConfig.md)
                 - fastapi
                     - [Context](api/faststream/confluent/fastapi/Context.md)
                     - [KafkaRouter](api/faststream/confluent/fastapi/KafkaRouter.md)
