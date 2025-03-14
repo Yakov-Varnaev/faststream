@@ -96,9 +96,9 @@ def load_log_config(path: Path) -> "AnyDict":
     with path.open() as f:
         cfg = loader(f.read())
 
-    assert isinstance(
-        cfg, dict
-    ), f"Logging configuration file must contain dict-like object. Got: {type(cfg)}"
+    assert isinstance(cfg, dict), (
+        f"Logging configuration file must contain dict-like object. Got: {type(cfg)}"
+    )
 
     return cfg
 
