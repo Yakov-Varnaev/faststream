@@ -9,7 +9,7 @@ from faststream._internal.application import Application
 from faststream.app import FastStream
 from faststream.asgi import AsgiFastStream
 from faststream.cli.main import cli as faststream_app
-from faststream.cli.utils.logs import get_log_level
+from faststream.cli.utils.logs import get_log_level, load_log_config
 
 
 @pytest.mark.parametrize(
@@ -151,15 +151,16 @@ def test_run_as_asgi_mp_with_log_level(
         asgi_runner().run.assert_called_once()
 
 
+@pytest.mark.parametrize("config_path", ["log_config.json", "log_config.yaml"])
 @pytest.mark.parametrize("app", [pytest.param(AsgiFastStream())])
 def test_run_as_asgi_mp_with_log_config(
     runner: CliRunner,
     app: Application,
-    log_config_file_path: Path,
-    log_config_dict: dict,
+    config_path: str,
 ):
     asgi_multiprocess = "faststream.cli.supervisors.asgi_multiprocess.ASGIMultiprocess"
     _import_obj_or_factory = "faststream.cli.utils.imports._import_obj_or_factory"
+    log_config_path = Path(__file__).parent / "fixtures" / config_path
 
     with patch(asgi_multiprocess) as asgi_runner, patch(
         _import_obj_or_factory, return_value=(None, app)
@@ -176,7 +177,7 @@ def test_run_as_asgi_mp_with_log_config(
                 "--workers",
                 "3",
                 "--log-config",
-                log_config_file_path,
+                log_config_path,
             ],
         )
         assert result.exit_code == 0, result.stdout
@@ -189,7 +190,7 @@ def test_run_as_asgi_mp_with_log_config(
                 {"host": "0.0.0.0", "port": "8000"},
                 False,
                 0,
-                log_config_dict,
+                load_log_config(log_config_path),
             ),
             workers=3,
         )

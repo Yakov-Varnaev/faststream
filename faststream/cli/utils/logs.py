@@ -1,4 +1,3 @@
-import json
 import logging
 from collections import defaultdict
 from enum import Enum
@@ -9,9 +8,12 @@ from typing import TYPE_CHECKING, DefaultDict, Optional, Union
 import typer
 import yaml
 
+from faststream._compat import json_loads
+
+
 if TYPE_CHECKING:
     from faststream._internal.application import Application
-    from faststream.types import LoggerProto
+    from faststream.types import AnyDict, LoggerProto
 
 
 class LogLevels(str, Enum):
@@ -88,13 +90,20 @@ def check_log_config_path(path: Optional[Path]) -> Optional[Path]:
     return path
 
 
-def load_log_config(path: Path) -> dict:
+def load_log_config(path: Path) -> "AnyDict":
     """Loads logging configuration dictionary from the given json or yaml file."""
-    loader = json.load if path.suffix == ".json" else yaml.safe_load
+    loader = json_loads if path.suffix == ".json" else yaml.safe_load
+
     with path.open() as f:
-        return loader(f)
+        cfg = loader(f.read())
+
+    assert isinstance(
+        cfg, dict
+    ), f"Logging configuration file must contain dict-like object. Got: {type(cfg)}"
+
+    return cfg
 
 
-def set_log_config(config: dict) -> None:
+def set_log_config(config: "AnyDict") -> None:
     """Sets the log config from the given file."""
     dictConfig(config)

@@ -14,10 +14,6 @@
     }
   },
   "loggers": {
-    "faststream.access.redis": {
-      "level": "DEBUG",
-      "propagate": false
-    },
     "faststream": {
       "level": "DEBUG",
       "handlers": ["console"],

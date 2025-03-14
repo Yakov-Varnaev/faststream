@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 import pytest
 
 from faststream import FastStream
@@ -27,14 +24,3 @@ def app_without_broker():
 @pytest.fixture
 def app(broker):
     return FastStream(broker)
-
-
-@pytest.fixture
-def log_config_file_path() -> Path:
-    return Path(__file__).parent / "fixtures" / "log_config.json"
-
-
-@pytest.fixture
-def log_config_dict(log_config_file_path: Path) -> dict:
-    with log_config_file_path.open() as f:
-        return json.load(f)
