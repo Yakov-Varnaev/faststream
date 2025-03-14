@@ -10,7 +10,6 @@ import yaml
 
 from faststream._compat import json_loads
 
-
 if TYPE_CHECKING:
     from faststream._internal.application import Application
     from faststream.types import AnyDict, LoggerProto
