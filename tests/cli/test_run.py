@@ -93,7 +93,13 @@ def test_run_as_asgi_with_many_workers(
         asgi_runner.assert_called_once()
         asgi_runner.assert_called_once_with(
             target="faststream:app",
-            args=("faststream:app", {"host": "0.0.0.0", "port": "8000"}, False, 0),
+            args=(
+                "faststream:app",
+                {"host": "0.0.0.0", "port": "8000"},
+                False,
+                0,
+                None,
+            ),
             workers=workers,
         )
         asgi_runner().run.assert_called_once()
@@ -138,6 +144,7 @@ def test_run_as_asgi_mp_with_log_level(
                 {"host": "0.0.0.0", "port": "8000"},
                 False,
                 get_log_level(log_level),
+                None,
             ),
             workers=3,
         )

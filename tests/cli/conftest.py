@@ -31,7 +31,7 @@ def app(broker):
 
 @pytest.fixture
 def log_config_file_path() -> Path:
-    return Path(__file__).parent / "log_config.json"
+    return Path(__file__).parent / "fixtures" / "log_config.json"
 
 
 @pytest.fixture
