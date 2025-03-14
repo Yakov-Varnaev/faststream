@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -137,6 +138,51 @@ def test_run_as_asgi_mp_with_log_level(
                 {"host": "0.0.0.0", "port": "8000"},
                 False,
                 get_log_level(log_level),
+            ),
+            workers=3,
+        )
+        asgi_runner().run.assert_called_once()
+
+
+@pytest.mark.parametrize("app", [pytest.param(AsgiFastStream())])
+def test_run_as_asgi_mp_with_log_config(
+    runner: CliRunner,
+    app: Application,
+    log_config_file_path: Path,
+    log_config_dict: dict,
+):
+    asgi_multiprocess = "faststream.cli.supervisors.asgi_multiprocess.ASGIMultiprocess"
+    _import_obj_or_factory = "faststream.cli.utils.imports._import_obj_or_factory"
+
+    with patch(asgi_multiprocess) as asgi_runner, patch(
+        _import_obj_or_factory, return_value=(None, app)
+    ):
+        result = runner.invoke(
+            faststream_app,
+            [
+                "run",
+                "faststream:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--workers",
+                "3",
+                "--log-config",
+                log_config_file_path,
+            ],
+        )
+        assert result.exit_code == 0, result.stdout
+
+        asgi_runner.assert_called_once()
+        asgi_runner.assert_called_once_with(
+            target="faststream:app",
+            args=(
+                "faststream:app",
+                {"host": "0.0.0.0", "port": "8000"},
+                False,
+                0,
+                log_config_dict,
             ),
             workers=3,
         )

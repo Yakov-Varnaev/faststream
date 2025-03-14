@@ -2,6 +2,7 @@ import logging
 import sys
 import warnings
 from contextlib import suppress
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import anyio
@@ -15,7 +16,14 @@ from faststream._internal.application import Application
 from faststream.asgi.app import AsgiFastStream
 from faststream.cli.docs.app import docs_app
 from faststream.cli.utils.imports import import_from_string
-from faststream.cli.utils.logs import LogLevels, get_log_level, set_log_level
+from faststream.cli.utils.logs import (
+    LogLevels,
+    check_log_config_path,
+    get_log_level,
+    load_log_config,
+    set_log_config,
+    set_log_level,
+)
 from faststream.cli.utils.parser import parse_cli_args
 from faststream.exceptions import INSTALL_WATCHFILES, SetupError, ValidationError
 
@@ -75,6 +83,17 @@ def run(
         help="Set selected level for FastStream and brokers logger objects.",
         envvar="FASTSTREAM_LOG_LEVEL",
     ),
+    log_config: Optional[Path] = typer.Option(
+        None,
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        writable=False,
+        case_sensitive=False,
+        help="Use configuration file for logging",
+        envvar="FASTSTREAM_LOG_CONFIG",
+        callback=check_log_config_path,
+    ),
     reload: bool = typer.Option(
         False,
         "--reload",
@@ -114,6 +133,7 @@ def run(
 
     app, extra = parse_cli_args(app, *ctx.args)
     casted_log_level = get_log_level(log_level)
+    log_config_dict = load_log_config(log_config) if log_config else None
 
     if app_dir:  # pragma: no branch
         sys.path.insert(0, app_dir)
@@ -121,7 +141,7 @@ def run(
     # Should be imported after sys.path changes
     module_path, app_obj = import_from_string(app, is_factory=is_factory)
 
-    args = (app, extra, is_factory, casted_log_level)
+    args = (app, extra, is_factory, casted_log_level, log_config_dict)
 
     if reload and workers > 1:
         raise SetupError("You can't use reload option with multiprocessing")
@@ -173,6 +193,7 @@ def run(
             app_obj,
             extra_options=extra,
             log_level=casted_log_level,
+            log_config=log_config,
         )
 
 
@@ -182,6 +203,7 @@ def _run(
     extra_options: Dict[str, "SettingField"],
     is_factory: bool,
     log_level: int = logging.NOTSET,
+    log_config: Optional[dict] = None,
     app_level: int = logging.INFO,  # option for reloader only
 ) -> None:
     """Runs the specified application."""
@@ -190,6 +212,7 @@ def _run(
         app_obj,
         extra_options=extra_options,
         log_level=log_level,
+        log_config=log_config,
         app_level=app_level,
     )
 
@@ -198,6 +221,7 @@ def _run_imported_app(
     app_obj: "Application",
     extra_options: Dict[str, "SettingField"],
     log_level: int = logging.NOTSET,
+    log_config: Optional[dict] = None,
     app_level: int = logging.INFO,  # option for reloader only
 ) -> None:
     if not isinstance(app_obj, Application):
@@ -207,6 +231,9 @@ def _run_imported_app(
 
     if log_level > 0:
         set_log_level(log_level, app_obj)
+
+    if log_config:
+        set_log_config(log_config)
 
     if sys.platform not in ("win32", "cygwin", "cli"):  # pragma: no cover
         with suppress(ImportError):

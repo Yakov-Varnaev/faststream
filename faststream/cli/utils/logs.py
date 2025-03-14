@@ -1,7 +1,13 @@
+import json
 import logging
 from collections import defaultdict
 from enum import Enum
+from logging.config import dictConfig
+from pathlib import Path
 from typing import TYPE_CHECKING, DefaultDict, Optional, Union
+
+import typer
+import yaml
 
 if TYPE_CHECKING:
     from faststream._internal.application import Application
@@ -72,3 +78,23 @@ def set_log_level(level: int, app: "Application") -> None:
     broker_logger: Optional[LoggerProto] = getattr(app.broker, "logger", None)
     if broker_logger is not None and getattr(broker_logger, "setLevel", None):
         broker_logger.setLevel(level)  # type: ignore[attr-defined]
+
+
+def check_log_config_path(path: Path) -> dict:
+    if not path.suffix.endswith(("json", "yaml", "yml")):
+        raise typer.BadParameter(
+            "Only json and yaml files are supported for logging configuration files."
+        )
+    return path
+
+
+def load_log_config(path: Path) -> dict:
+    """Loads logging configuration dictionary from the given json or yaml file."""
+    loader = json.load if path.suffix == ".json" else yaml.safe_load
+    with path.open() as f:
+        return loader(f)
+
+
+def set_log_config(config: dict) -> None:
+    """Sets the log config from the given file."""
+    dictConfig(config)
