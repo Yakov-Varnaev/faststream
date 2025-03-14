@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -8,7 +9,7 @@ from faststream._internal.application import Application
 from faststream.app import FastStream
 from faststream.asgi import AsgiFastStream
 from faststream.cli.main import cli as faststream_app
-from faststream.cli.utils.logs import get_log_level
+from faststream.cli.utils.logs import get_log_level, load_log_config
 
 
 @pytest.mark.parametrize(
@@ -92,7 +93,13 @@ def test_run_as_asgi_with_many_workers(
         asgi_runner.assert_called_once()
         asgi_runner.assert_called_once_with(
             target="faststream:app",
-            args=("faststream:app", {"host": "0.0.0.0", "port": "8000"}, False, 0),
+            args=(
+                "faststream:app",
+                {"host": "0.0.0.0", "port": "8000"},
+                False,
+                0,
+                None,
+            ),
             workers=workers,
         )
         asgi_runner().run.assert_called_once()
@@ -137,6 +144,53 @@ def test_run_as_asgi_mp_with_log_level(
                 {"host": "0.0.0.0", "port": "8000"},
                 False,
                 get_log_level(log_level),
+                None,
+            ),
+            workers=3,
+        )
+        asgi_runner().run.assert_called_once()
+
+
+@pytest.mark.parametrize("config_path", ["log_config.json", "log_config.yaml"])
+@pytest.mark.parametrize("app", [pytest.param(AsgiFastStream())])
+def test_run_as_asgi_mp_with_log_config(
+    runner: CliRunner,
+    app: Application,
+    config_path: str,
+):
+    asgi_multiprocess = "faststream.cli.supervisors.asgi_multiprocess.ASGIMultiprocess"
+    _import_obj_or_factory = "faststream.cli.utils.imports._import_obj_or_factory"
+    log_config_path = Path(__file__).parent / "fixtures" / config_path
+
+    with patch(asgi_multiprocess) as asgi_runner, patch(
+        _import_obj_or_factory, return_value=(None, app)
+    ):
+        result = runner.invoke(
+            faststream_app,
+            [
+                "run",
+                "faststream:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--workers",
+                "3",
+                "--log-config",
+                log_config_path,
+            ],
+        )
+        assert result.exit_code == 0, result.stdout
+
+        asgi_runner.assert_called_once()
+        asgi_runner.assert_called_once_with(
+            target="faststream:app",
+            args=(
+                "faststream:app",
+                {"host": "0.0.0.0", "port": "8000"},
+                False,
+                0,
+                load_log_config(log_config_path),
             ),
             workers=3,
         )
