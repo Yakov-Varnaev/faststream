@@ -80,8 +80,8 @@ def set_log_level(level: int, app: "Application") -> None:
         broker_logger.setLevel(level)  # type: ignore[attr-defined]
 
 
-def check_log_config_path(path: Path) -> dict:
-    if not path.suffix.endswith(("json", "yaml", "yml")):
+def check_log_config_path(path: Optional[Path]) -> Optional[Path]:
+    if path and not path.suffix.endswith(("json", "yaml", "yml")):
         raise typer.BadParameter(
             "Only json and yaml files are supported for logging configuration files."
         )
